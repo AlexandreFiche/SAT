@@ -1,25 +1,5 @@
 import numpy as np
 
-
-def lire_fichier_sat(nom):
-    fichier = open(nom, "r")
-    lignes = fichier.readlines()
-    C = []
-
-    for l in lignes:
-        if l[0] != "c" and l[0] != "p" and l[0] != "%" and l[0] != "0":
-            clause = l[:-2].split(' ')
-            while '' in clause:
-               clause.remove('')
-            clause_int = [int(i) for i in clause]
-            if clause_int != []:
-                C += [clause_int]
-        if l[0] == "p":
-            param = l.split(' ')
-            taille = int(param[2])
-    #print(C)
-    return C,taille
-
 def test_consistance(C,S):
     #print("S:",S)
     consistant = True
@@ -78,8 +58,6 @@ def choix_variable(S,P,C,taille):
     #c =  heuristique_max(P,taille)
     #if c != []:
      #   return c
-    #print("P:",P)
-    #print("S:",S)
     d = heuristique_plus_courte(P)
     if d != []:
         return d
@@ -148,7 +126,6 @@ def heuristique_max(P,taille):
     return []
 
 def heuristique_max2(P,taille):
-    nb_max += 1
     var  = [0] * taille
     for c in P: 
         for l in c:
@@ -192,14 +169,13 @@ def choix_simple(S,taille):
 def backtrack(C,taille):
     n = taille
     fini = False
-    Ccur = C.copy()
     S = []
     i = 0
     nb_bt = 0
-    nb_max = 0
     nb_pur = 0
     nb_unitaire = 0
-    print("--BACKTRACK--")
+    nb_pc = 0
+    #print("--BACKTRACK--")
     while not fini:
         consistant,P = test_consistance(C,S)
         if consistant:
@@ -208,7 +184,20 @@ def backtrack(C,taille):
                 fini = True
             else:
                 #print("------CHOIX VARIABLE")
-                elem = choix_variable(S,P,C,taille)
+                elem = clause_unitaire(P)
+                if elem != []:
+                    nb_unitaire += 1
+                if elem == []:
+                    elem = litteraux_purs(P,taille)
+                    if elem != []:
+                        nb_pur += 1
+                if elem == []:
+                    elem = heuristique_plus_courte(P)
+                    if elem != []:
+                        nb_pc += 1
+                if elem == []:
+                    elem = choix_variable(S,P,C,taille)
+                        
                 #print("------AJOUT DE: ",elem)
                 S.append(elem)
         else:
@@ -227,7 +216,7 @@ def backtrack(C,taille):
         #print("---FIN BOUCLE S:",S)
     #print("--FIN BACKTRACK: TAILLE S: ",len(S)," S = ",S)
     #print(test_consistance(C,S))
-    print("backtrack: ",nb_bt," pur: ",nb_pur," unit: ",nb_unitaire," max: ",nb_max)
+    print("TOTAL OPERATION:\nNombre de backtrack: ",nb_bt,"\nNombre de choix à partir de clauses:\n\t- Pur: ",nb_pur,"\n\t- Unitaires: ",nb_unitaire,"\n\t- Plus courte: ",nb_pc)
     #print(S)
     return S
 
