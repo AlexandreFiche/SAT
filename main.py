@@ -4,6 +4,7 @@ import re
 import os
 import sys
 import time
+# Alexandre FICHE 2020 
 
 def lire_fichier_sat(nom):
     with open(nom, "r") as fichier:
@@ -21,15 +22,20 @@ def lire_fichier_sat(nom):
             if l[0] == "p":
                 param = l.split(' ')
                 taille = int(param[2])
-        #print(C)
     return C,taille
 
 def lire_fichier_graphe(nom):
+    print("Entre le nombre de couleur que vous souhaitez: (par defaut 5 si vous ne mettez pas de chiffre")
+    clr = input()
+    if clr.isdigit():
+        couleur = int(clr)
+    else:
+        couleur = 5
+    print("Nombre de couleur pour la coloration: ",couleur)
+
     with open(nom, "r") as fichier:
         lignes = fichier.readlines()
         C = []
-        couleur = 3
-
         for l in lignes:
             if l[0] != "c" and l[0] != "p" and l[0] != "%" and l[0] != "0":
                 #print(l)
@@ -39,28 +45,26 @@ def lire_fichier_graphe(nom):
                 clause_int = [int(i) for i in clause]
                 if len(clause_int) == 2:
                     clause_arc = cree_arc(clause_int,couleur)
-                    #print("arc: ",clause_int[0]," ",clause_int[1],": ",clause_arc)
                     C += clause_arc
+            # Recuperation parametre
             if l[0] == "p":
                 param = l.split(' ')
                 taille = int(param[2])
-                #print("p:",param)
                 C = cree_coloration(taille,couleur)
-        #print(C)
     return C,taille,couleur 
 
 def ecrire_fichier_graphe(S,couleur):
     with open("coloration_res.txt","w") as fichier:
         for elem in S:
             if elem[1] == 1:
-                print("Solution du sommet ",(elem[0]-1)//couleur+ + 1,": ",elem[0] % (couleur) + 1, elem[0])
+                #print("Solution du sommet ",(elem[0]-1)//couleur+ + 1,": ",elem[0] % (couleur) + 1, elem[0])
                 fichier.write( str((elem[0]-1)//couleur+ + 1) + " " + str(elem[0] % (couleur) + 1) + "\n")
 
 def ecrire_fichier_sat(S):
     with open("sat_res.txt","w") as fichier:
         for elem in S:
             if elem[1] == 1:
-                print("Solution de la variable ",elem[0],elem[1])
+                #print("Solution de la variable ",elem[0],elem[1])
                 fichier.write(str(elem[0]) + " " + str(elem[1]) + "\n")
    
 def cree_coloration(nb_sommets, couleur):
@@ -99,7 +103,6 @@ def main(argv):
                 liste_fichier.append(e)
                 print("\t",i,":",e)
                 i += 1
-        #fichier = "./Data/test.col"
         choix = int(input())
         while choix > len(liste_fichier) and choix < 0:
             choix = int(input())
@@ -108,31 +111,35 @@ def main(argv):
     else:
         fichier = argv[0]
     print("Solveur SAT ",end="")
-    s = fichier.split('.')
-    if s[-1] == "col":
+    if ".col" in fichier:
+        print("sur une coloration de graphe")
         C,nb_som,nb_coul = lire_fichier_graphe(fichier)
         taille = nb_som * nb_coul
-        print("sur une coloration de graphe")
+       
     else:
-        #"./Data/uf50-01.cnf
-        C,taille = lire_fichier_sat(fichier)
         print("classique")
+        C,taille = lire_fichier_sat(fichier)
+        
 
     print("Nb de variable total: ",taille)
 
-    #C = [[1, 2, 3, 4], [-1, 2, -3, -4],[-2,-5],[2,3,5]]
-    #S = [[1,1,-1],[2,-1,1]]
-    #print(st.test_consistance(C,S))
+    start_time = time.time()
     S = st.backtrack(C,taille)
+    duree = time.time() - start_time
+
+    print("Duree du solveur: ",duree,"s")
     #cProfile.run("S = st6.backtrack(C,taille)")
     print("Le modele est: ", len(S) != 0)
     print(S)
     print("taille de :",len(S))
 
-    if s[-1] == "col":
-        ecrire_fichier_graphe(S,nb_coul)
-    else :
-        ecrire_fichier_sat(S)
+    if S != []:
+        if ".col" in fichier:
+            print("Ecriture du resultat dans le fichier coloration_res.txt")
+            ecrire_fichier_graphe(S,nb_coul)
+        else :
+            print("Ecriture du resultat dans le fichier sat_res.txt")
+            ecrire_fichier_sat(S)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
